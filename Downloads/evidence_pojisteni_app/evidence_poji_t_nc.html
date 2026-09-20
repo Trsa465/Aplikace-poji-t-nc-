@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="cs">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PojištěníApp - Evidence pojištěnců</title>
+    <style>
+        /* Základní styly stránky */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+
+        /* Hlavní kontejner obsahu */
+        .container {
+            max-width: 850px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        /* Tabulka pojištěnců */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            margin-bottom: 40px;
+        }
+
+        th,
+        td {
+            border: 1px solid #707070;
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+
+        th {
+            font-weight: bold;
+            background-color: #fff;
+        }
+
+        /* Sekce formuláře nového pojištěnce */
+        .form-section {
+            display: flex;
+            gap: 25px;
+            align-items: flex-start;
+        }
+
+        .avatar-box {
+            width: 110px;
+            height: 110px;
+            border: 1px solid #aaa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fff;
+            flex-shrink: 0;
+        }
+
+        .avatar-box svg {
+            width: 80px;
+            height: 80px;
+            stroke: #3182ce;
+        }
+
+        /* Mřížka formulářových polí */
+        .form-grid {
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: #007bff;
+        }
+
+        /* Tlačítko Uložit */
+        .btn-submit {
+            grid-column: span 2;
+            justify-self: center;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 45px;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .btn-submit:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+
+
+
+    <div class="container">
+        <!-- Tabulka pojištěnců -->
+        <h2>Pojištěnci</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Jméno a příjmení</th>
+                    <th>Telefon</th>
+                    <th>Věk</th>
+                    <th>Akce</th>
+                </tr>
+            </thead>
+            <tbody id="tabulka-pojistenci">
+
+            </tbody>
+        </table>
+
+        <!-- Formulář pro zadání pojištěnce -->
+        <h2>Nový pojištěnec</h2>
+        <div class="form-section">
+
+            <form id="form-pojistenec" class="form-grid" onsubmit="pridatPojistence(event)">
+                <div class="form-group">
+                    <label for="jmeno">Jméno</label>
+                    <input type="text" id="jmeno" required>
+                </div>
+                <div class="form-group">
+                    <label for="prijmeni">Příjmení</label>
+                    <input type="text" id="prijmeni" required>
+                </div>
+                <div class="form-group">
+                    <label for="vek">Věk</label>
+                    <input type="number" id="vek" required>
+                </div>
+                <div class="form-group">
+                    <label for="telefon">Telefon</label>
+                    <input type="tel" minlength="9" maxlength="13" pattern="^\+?[0-9]+$" id="telefon" required>
+                </div>
+                <button type="submit" class="btn-submit">Uložit</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+
+        // 1. Třída / Konstruktor pro Pojištěnce
+        class Pojistenec {
+            constructor(jmeno, prijmeni, vek, telefon) {
+                this.jmeno = jmeno;
+                this.prijmeni = prijmeni;
+                this.vek = vek;
+                this.telefon = telefon;
+            }
+
+            // Metoda toString() pro vrácení celého jména - spojení textu do jednoho pole
+            toString() {
+                return `${this.jmeno} ${this.prijmeni}`;
+            }
+        }
+
+        // Výchozí seznam pojištěnců 
+        const seznamPojistencu = [
+
+        ];
+
+        // Funkce proykreslení tabulky pojištěnců
+        function vykresliTabulku() {
+            const tbody = document.getElementById("tabulka-pojistenci");
+            tbody.innerHTML = "";
+
+            // Místo 'for...of' použijeme klasický cyklus nebo index z entries(), 
+            // abychom znali pozici (index) každého pojištěnce v poli
+            seznamPojistencu.forEach((pojistenec, index) => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+            <td><strong>${pojistenec.toString()}</strong></td>
+            <td>${pojistenec.telefon}</td>
+            <td>${pojistenec.vek}</td>
+            <td>
+                <!-- Při kliknutí zavoláme smazatPojistence a předáme index -->
+                <button onclick="smazatPojistence(${index})">Smazat</button>
+            </td>
+        `;
+                tbody.appendChild(tr);
+            });
+        }
+
+
+        function smazatPojistence(index) {
+            seznamPojistencu.splice(index, 1);
+
+            // Překlresleni tabulky
+            vykresliTabulku();
+        }
+        // Funkce pro přidání nového pojištěnce z formuláře
+        function pridatPojistence(event) {
+            event.preventDefault(); // Zaznamená odeslání bez znovunačtení stránky
+
+            // Získání hodnot z formuláře
+            const jmeno = document.getElementById("jmeno").value.trim();
+            const prijmeni = document.getElementById("prijmeni").value.trim();
+            const vek = document.getElementById("vek").value;
+            const telefon = document.getElementById("telefon").value.trim();
+
+            // Vytvoření nové instance Pojištěnce
+            const novyPojistenec = new Pojistenec(jmeno, prijmeni, vek, telefon);
+
+            // Přidání do pole a aktualizace tabulky
+            seznamPojistencu.push(novyPojistenec);
+            vykresliTabulku();
+
+            // Vyčištění formuláře
+            document.getElementById("form-pojistenec").reset();
+        }
+
+        // 5. Inicializace tabulky při načtení stránky
+        vykresliTabulku();
+    </script>
+</body>
+
+</html>
